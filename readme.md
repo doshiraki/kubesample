@@ -1,1 +1,2 @@
 # kubenetes sample
+debug
