@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myap
+  name: myap
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 3600
+  selector:
+    matchLabels:
+      app: myap
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: myap
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: is_worker
+                    operator: Exists
+      volumes:
+        - name: vol-db
+          persistentVolumeClaim:
+            claimName: mydb-pv-claim
+        - name: vol-ap
+          persistentVolumeClaim:
+            claimName: myap-pv-claim
+        - name: vol-node
+          persistentVolumeClaim:
+            claimName: mynode-pv-claim
+      containers:
+      - name: ap
+        image: nginx
+        resources:
+          limits:
+            memory: 1.5Gi
+            cpu: "0.3"
+        ports:
+          - containerPort: 80
+        volumeMounts:
+          - mountPath: /usr/share/nginx/html
+            name: vol-ap
+            subPath: content
+      - name: db
+        image: mysql
+        args:
+          - --character-set-server=utf8mb4
+          - --collation-server=utf8mb4_unicode_ci
+        resources:
+          limits:
+            memory: 1.5Gi
+            cpu: "0.3"
+        ports:
+          - containerPort: 3306
+        volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: vol-db
+            subPath: databases
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: example
+          - name: MYSQL_USER
+            value: testuser
+          - name: MYSQL_PASSWORD
+            value: testpass
+          - name: MYSQL_DATABASE
+            value: testdb
+      - name: node
+        image: node:slim
+        tty: true
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: "0.3"
+        ports:
+          - containerPort: 3000
+        volumeMounts:
+          - mountPath: /root/node
+            name: vol-node
+            subPath: src
+          
+status: {}

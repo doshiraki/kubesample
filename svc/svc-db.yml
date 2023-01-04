@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mydb
+  name: mydb
+spec:
+  ports:
+  - port: 13306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: myap
+  type: LoadBalancer
+status:
+  loadBalancer: {}
